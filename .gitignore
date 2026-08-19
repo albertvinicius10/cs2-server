@@ -1,0 +1,14 @@
+# Variáveis sensíveis
+.env
+
+# Dados do servidor (grandes demais)
+addons/
+plugins/
+
+# Volumes Docker
+mysql_data/
+cs2_data/
+
+# Logs
+*.log
+bd.txt
