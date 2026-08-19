@@ -6,12 +6,8 @@ ENV STEAMAPP_ID=730
 USER steam
 WORKDIR /home/steam
 
-# ─── NÃO instala o CS2 aqui ──────────────────────────────
-# O entrypoint faz isso e salva no volume persistente
-
-COPY --chown=steam:steam cfg/         ${CS2_DIR}/game/csgo/cfg/
-COPY --chown=steam:steam plugins/     ${CS2_DIR}/game/csgo/addons/counterstrikesharp/plugins/
-COPY --chown=steam:steam addons/      ${CS2_DIR}/game/csgo/addons/
+# Sem RUN de instalação do CS2
+# Sem COPY de cfg/plugins/addons (já são volumes no compose)
 
 EXPOSE 27015/udp
 EXPOSE 27015/tcp
