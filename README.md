@@ -1,114 +1,157 @@
-# CS2 Server 5x5 — Docker
+# CS2 Server 5x5 — Linux & Windows
 
-Servidor competitivo CS2 com MatchZy, WeaponPaints (skins/facas/luvas) e MySQL, tudo em Docker.
+Servidor competitivo CS2 com **MatchZy** e **WeaponPaints** (skins/facas/luvas).  
+Funciona nativamente no **Linux** e no **Windows** — sem Docker.
 
 ---
 
 ## Pré-requisitos
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado
-- Pelo menos **8 GB de RAM** e **30 GB livres** no disco
-- CS2 instalado na sua máquina (para conectar)
+| | Linux | Windows |
+|---|---|---|
+| **Sistema** | Ubuntu 20.04+, Debian 11+, Fedora 37+, Arch | Windows 10/11 64-bit |
+| **RAM** | 8 GB+ | 8 GB+ |
+| **Disco** | 35 GB livres | 35 GB livres |
+| **PowerShell** | — | 5.1+ (já incluso no Windows 10+) |
+| **MySQL** | `sudo apt install mysql-server` | [MySQL Community](https://dev.mysql.com/downloads/mysql/) |
 
 ---
 
 ## 1. Configuração inicial
 
-### 1.1 Edite o arquivo `.env`
+### 1.1 Copie e edite o `.env`
+
+```bash
+cp .env.example .env
+```
+
+Edite o `.env`:
 
 ```env
 SERVER_NAME="Meu Servidor 5x5"
-SERVER_PASSWORD=              # deixe vazio para sem senha
-STEAM_TOKEN=                  # veja abaixo como pegar
-MYSQL_PASSWORD=cs2senha123
-MYSQL_ROOT_PASSWORD=rootsenha123
+SERVER_PASSWORD=        # vazio = sem senha
+SERVER_PORT=27015
+START_MAP=de_dust2
+
+STEAM_TOKEN=            # veja abaixo como obter
 ```
 
 ### 1.2 Steam Token (para servidor público)
 
 1. Acesse: https://steamcommunity.com/dev/managegameservers
-2. Crie um token com **App ID: 730**
-3. Cole no `.env` no campo `STEAM_TOKEN`
+2. Crie com **App ID: 730**
+3. Cole no `.env` → `STEAM_TOKEN=SEU_TOKEN`
 
-> Para teste local, pode deixar vazio. O servidor vai funcionar na LAN.
+> Para teste local na LAN, pode deixar em branco.
 
 ---
 
-## 2. Instalar a base do servidor → pasta `addons/`
+## 2. Instalar o servidor CS2
 
-Metamod e CounterStrikeSharp são a base que faz os plugins funcionarem. Ambos vão para a pasta `addons/`.
+### No Linux
 
-### Metamod:Source (CS2)
-1. Acesse: https://www.sourcemm.net/downloads.php?branch=master
-2. Baixe a versão **Linux CS2**
-3. Extraia o conteúdo na pasta `addons/`
+```bash
+bash install.sh
+```
+
+O script instala o SteamCMD automaticamente e baixa o CS2 (~30 GB).
+
+### No Windows
+
+Abra o **PowerShell como Administrador** e execute:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+.\install.ps1
+```
+
+> O CS2 será instalado em `%USERPROFILE%\cs2server`
+
+---
+
+## 3. Instalar Metamod + CounterStrikeSharp
+
+Esses dois são a base para rodar plugins. Vão para a pasta `addons/` dentro do CS2.
+
+### Metamod:Source
+1. Baixe em: https://www.sourcemm.net/downloads.php?branch=master
+   - Linux → versão **Linux CS2**
+   - Windows → versão **Windows CS2**
+2. Extraia em:
+   - Linux: `~/cs2server/game/csgo/addons/`
+   - Windows: `%USERPROFILE%\cs2server\game\csgo\addons\`
 
 ### CounterStrikeSharp
-1. Acesse: https://github.com/roflmuffin/CounterStrikeSharp/releases
-2. Baixe o arquivo `counterstrikesharp-with-runtime-linux.zip`
-3. Extraia o conteúdo na pasta `addons/`
+1. Baixe em: https://github.com/roflmuffin/CounterStrikeSharp/releases
+   - Linux → `counterstrikesharp-with-runtime-linux.zip`
+   - Windows → `counterstrikesharp-with-runtime-windows.zip`
+2. Extraia na mesma pasta `addons/`
 
 ---
 
-## 3. Instalar os plugins → pasta `plugins/`
-
-Com a base instalada, agora os plugins de funcionalidade. Cada um vai em sua própria subpasta dentro de `plugins/`.
+## 4. Instalar plugins
 
 ### MatchZy
-1. Acesse: https://github.com/shobhit-pathak/MatchZy/releases
-2. Baixe o `.zip` mais recente
-3. Extraia na pasta `plugins/MatchZy/`
+1. Baixe em: https://github.com/shobhit-pathak/MatchZy/releases
+2. Coloque em: `plugins/MatchZy/`
+3. O `install.sh` / `install.ps1` copia automaticamente para o CS2
 
 ### WeaponPaints (skins, facas e luvas)
-1. Acesse: https://github.com/Nereziel/cs2-WeaponPaints/releases
-2. Baixe o `.zip` mais recente
-3. Extraia na pasta `plugins/WeaponPaints/`
-4. Configure o arquivo `plugins/WeaponPaints/WeaponPaints.json`:
+1. Baixe em: https://github.com/Nereziel/cs2-WeaponPaints/releases
+2. Coloque em: `plugins/WeaponPaints/`
+3. Configure `plugins/WeaponPaints/WeaponPaints.json`:
 
 ```json
 {
-  "DatabaseHost": "mysql",
+  "DatabaseHost": "localhost",
   "DatabasePort": 3306,
-  "DatabaseUser": "exemplo",
-  "DatabasePassword": "exemplo",
-  "DatabaseName": "exemplo"
+  "DatabaseUser": "cs2user",
+  "DatabasePassword": "cs2senha123",
+  "DatabaseName": "cs2"
 }
 ```
 
+4. Importe o banco de dados:
+   ```bash
+   # Linux
+   mysql -u root -p < mysql/init.sql
+
+   # Windows (no MySQL Command Line Client)
+   source caminho\para\mysql\init.sql
+   ```
+
 ---
 
-## 3. Subir o servidor
+## 5. Iniciar o servidor
+
+### Linux
 
 ```bash
-# Primeira vez (vai demorar — baixa o CS2 inteiro ~30 GB)
-docker-compose up --build
+bash start.sh
+```
 
-# Próximas vezes
-docker-compose up -d
+### Windows
 
-# Ver logs em tempo real
-docker-compose logs -f cs2
-
-# Parar tudo
-docker-compose down
+```powershell
+.\start.ps1
 ```
 
 ---
 
-## 4. Conectar ao servidor
+## 6. Conectar ao servidor
 
 No console do CS2:
 ```
 connect localhost:27015
 ```
 
-Ou pelo menu **Jogar > Servidores da comunidade** (LAN).
+Ou via menu **Jogar → Servidores da comunidade** (LAN).
 
 ---
 
-## 5. Comandos no jogo
+## 7. Comandos no jogo
 
-### Para jogadores
+### Jogadores
 | Comando | Função |
 |---------|--------|
 | `!ready` | Marcar como pronto |
@@ -119,7 +162,7 @@ Ou pelo menu **Jogar > Servidores da comunidade** (LAN).
 | `!knife` | Menu de skins de faca |
 | `!gloves` | Menu de luvas |
 
-### Para admin
+### Admin
 | Comando | Função |
 |---------|--------|
 | `!start` | Iniciar partida |
@@ -129,62 +172,54 @@ Ou pelo menu **Jogar > Servidores da comunidade** (LAN).
 
 ---
 
-## 6. Interface do banco de dados
-
-Acesse o phpMyAdmin para ver e editar o banco:
-```
-http://localhost:8080
-```
-
----
-
-## 7. Estrutura de arquivos
+## 8. Estrutura de arquivos
 
 ```
 cs2-server/
-├── Dockerfile              ← imagem do servidor
-├── docker-compose.yml      ← orquestração dos containers
-├── .env                    ← suas configurações (não compartilhe!)
+├── .env                    ← suas configurações (não suba no git!)
+├── .env.example            ← modelo do .env
+├── install.sh              ← instala CS2 no Linux
+├── install.ps1             ← instala CS2 no Windows
+├── start.sh                ← inicia o servidor no Linux
+├── start.ps1               ← inicia o servidor no Windows
 ├── cfg/
 │   ├── server.cfg          ← configuração principal
 │   └── matchzy/
 │       └── matchzy.cfg     ← configuração das partidas
-├── plugins/                ← seus plugins CSS (MatchZy, WeaponPaints...)
-├── addons/                 ← Metamod + CounterStrikeSharp
-├── mysql/
-│   └── init.sql            ← cria as tabelas automaticamente
-└── scripts/
-    └── entrypoint.sh       ← script de inicialização
+├── plugins/                ← seus plugins (MatchZy, WeaponPaints...)
+└── mysql/
+    └── init.sql            ← cria as tabelas no banco
 ```
 
 ---
 
-## 8. Subir para VPS (quando estiver tudo funcionando)
+## 9. Atualizar o CS2
+
+Basta rodar o instalador novamente — ele só baixa o que mudou:
 
 ```bash
-# 1. Copie a pasta inteira para a VPS
-scp -r cs2-server/ usuario@ip-da-vps:~/
+# Linux
+bash install.sh
 
-# 2. Na VPS, instale o Docker
-curl -fsSL https://get.docker.com | sh
-
-# 3. Suba o servidor
-cd cs2-server
-docker-compose up -d
+# Windows
+.\install.ps1
 ```
 
 ---
 
 ## Problemas comuns
 
-**Servidor não aparece na lista**
-→ Verifique se o `STEAM_TOKEN` está preenchido no `.env`
+**Servidor não aparece na lista pública**
+→ Verifique se `STEAM_TOKEN` está preenchido no `.env`
 
 **Plugins não carregam**
-→ Verifique se o Metamod e CounterStrikeSharp estão na pasta `addons/`
+→ Verifique se Metamod e CounterStrikeSharp estão instalados em `addons/`
 
-**Erro de MySQL**
-→ Aguarde 30 segundos após subir — o MySQL demora para inicializar
+**Erro de conexão MySQL (WeaponPaints)**
+→ Confirme que o MySQL está rodando e os dados do `.env` estão corretos
 
-**Download muito lento**
-→ O CS2 tem ~30 GB, é normal demorar na primeira vez
+**Windows: "não é possível executar scripts"**
+→ Execute no PowerShell: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`
+
+**Download lento (~30 GB)**
+→ É normal na primeira vez. Atualizações futuras são incrementais.

@@ -1,13 +1,14 @@
 # Variáveis sensíveis
 .env
 
-# Dados do servidor (grandes demais)
+# Dados do servidor (grandes demais — apenas conteúdo, não a pasta)
 addons/
-plugins/
+plugins/*
+!plugins/.gitkeep
 
-# Volumes Docker
-mysql_data/
-cs2_data/
+# Pastas de instalação local (geradas pelo install.sh / install.ps1)
+cs2server/
+steamcmd/
 
 # Logs
 *.log
