@@ -1,15 +1,43 @@
 # Variáveis sensíveis
 .env
+.env.local
+!.env.example
 
-# Dados do servidor (grandes demais — apenas conteúdo, não a pasta)
-addons/
-plugins/*
-!plugins/.gitkeep
-
-# Pastas de instalação local (geradas pelo install.sh / install.ps1)
-cs2server/
-steamcmd/
-
-# Logs
+# Logs e temporários
 *.log
+*.pid
+*.tmp
+*.bak
 bd.txt
+tmp/
+cache/
+__pycache__/
+*.pyc
+
+# Pastas de instalação local geradas pelo SteamCMD / servidor
+steamcmd/
+cs2server/
+
+# Artefatos pesados / runtime
+*.zip
+*.tar
+*.gz
+*.rar
+*.dem
+*.bsp
+*.vpk
+*.db
+*.sqlite
+*.sqlite3
+
+# Diretórios compilados/gerados
+game/**/addons/**/bin/
+game/**/addons/**/obj/
+plugins/**/bin/
+plugins/**/obj/
+
+# Editor / sistema
+.vscode/
+.DS_Store
+Thumbs.db
+set_mysql_connections.py

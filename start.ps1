@@ -15,9 +15,9 @@ function Write-Warn ($msg) { Write-Host "[AVISO] $msg" -ForegroundColor Yellow }
 function Write-Err  ($msg) { Write-Host "[ERRO]  $msg" -ForegroundColor Red; exit 1 }
 
 Write-Host ""
-Write-Host "═════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  CS2 Dedicated Server — Iniciando (Windows)" -ForegroundColor Cyan
-Write-Host "═════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "=============================================" -ForegroundColor Cyan
+Write-Host "  CS2 Dedicated Server - Iniciando (Windows)" -ForegroundColor Cyan
+Write-Host "=============================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ─── Carrega .env ────────────────────────────────────
@@ -32,7 +32,7 @@ if (Test-Path $EnvFile) {
             $parts = $line -split '=', 2
             if ($parts.Length -eq 2) {
                 $key   = $parts[0].Trim()
-                $value = $parts[1].Trim().Trim('"').Trim("'")
+                $value = ($parts[1] -replace '\s+#.*$', '').Trim().Trim('"').Trim("'")
                 $env_vars[$key] = $value
                 [System.Environment]::SetEnvironmentVariable($key, $value, "Process")
             }
@@ -91,4 +91,9 @@ $args = @(
 )
 
 # ─── Inicia CS2 ──────────────────────────────────────
-& $CS2Binary @args
+Push-Location $CS2Dir
+try {
+    & $CS2Binary @args
+} finally {
+    Pop-Location
+}

@@ -53,6 +53,18 @@ Write-Info "Pasta de instalação: $CS2Dir"
 
 Write-Success "CS2 instalado/atualizado com sucesso!"
 
+# ─── Registra Metamod no gameinfo ─────────────────────
+$GameInfo = "$CS2Dir\game\csgo\gameinfo.gi"
+if (Test-Path $GameInfo) {
+    $gameInfoText = Get-Content $GameInfo -Raw
+    if ($gameInfoText -notmatch '(?m)^\s*Game\s+csgo/addons/metamod\s*$') {
+        Copy-Item $GameInfo "$GameInfo.bak" -Force
+        $gameInfoText = $gameInfoText -replace '(?m)^(\s*Game_LowViolence\s+csgo_lv[^\r\n]*\r?\n)', '$1`t`tGame`tcsgo/addons/metamod`r`n'
+        [System.IO.File]::WriteAllText($GameInfo, $gameInfoText, (New-Object System.Text.UTF8Encoding($false)))
+        Write-Success "Metamod registrado no gameinfo.gi"
+    }
+}
+
 # ─── Copia configs ───────────────────────────────────
 $CfgDest = "$CS2Dir\game\csgo\cfg\matchzy"
 New-Item -ItemType Directory -Force -Path $CfgDest | Out-Null
@@ -69,15 +81,51 @@ if (Test-Path $matchzyCfg) {
     Write-Success "matchzy.cfg copiado"
 }
 
+# ─── Verifica Metamod + CounterStrikeSharp ────────────
+$AddonSource = "$ScriptDir\game\csgo\addons"
+$MetamodBinary = "$AddonSource\metamod\bin\win64\server.dll"
+$CounterStrikeSharpBinary = "$AddonSource\counterstrikesharp\bin\win64\counterstrikesharp.dll"
+if ((Test-Path $MetamodBinary) -and (Test-Path $CounterStrikeSharpBinary)) {
+    Copy-Item "$AddonSource\*" "$CS2Dir\game\csgo\addons" -Recurse -Force
+    Write-Success "Metamod + CounterStrikeSharp copiados"
+} else {
+    Write-Warn "Metamod/CounterStrikeSharp não estão completos no projeto."
+    Write-Warn "Baixe os pacotes Windows e extraia em $CS2Dir\game\csgo\addons\"
+}
+
 # ─── Copia plugins ───────────────────────────────────
 $PluginsSrc  = "$ScriptDir\plugins"
-$AddonsDest  = "$CS2Dir\game\csgo\addons\counterstrikesharp\plugins"
+$AddonsRoot  = "$CS2Dir\game\csgo\addons\counterstrikesharp"
+$AddonsDest  = "$AddonsRoot\plugins"
 
 $pluginFiles = Get-ChildItem -Path $PluginsSrc -Exclude ".gitkeep" -ErrorAction SilentlyContinue
 if ($pluginFiles) {
     Write-Info "Copiando plugins..."
     New-Item -ItemType Directory -Force -Path $AddonsDest | Out-Null
-    Copy-Item "$PluginsSrc\*" $AddonsDest -Recurse -Force
+
+    $matchzyPackage = Get-ChildItem -Path $PluginsSrc -Directory |
+        Where-Object { Test-Path "$($_.FullName)\addons\counterstrikesharp\plugins" } |
+        Select-Object -First 1
+    if ($matchzyPackage) {
+        Get-ChildItem -Path $AddonsDest -Directory -ErrorAction SilentlyContinue |
+            Where-Object { Test-Path "$($_.FullName)\addons\counterstrikesharp\plugins" } |
+            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+        Copy-Item "$($matchzyPackage.FullName)\addons\counterstrikesharp\plugins\*" $AddonsDest -Recurse -Force
+        if (Test-Path "$($matchzyPackage.FullName)\cfg\MatchZy") {
+            Copy-Item "$($matchzyPackage.FullName)\cfg\MatchZy" "$CS2Dir\game\csgo\cfg" -Recurse -Force
+        }
+    }
+
+    $weaponPaintsSrc = "$PluginsSrc\WeaponPaints"
+    if (Test-Path "$weaponPaintsSrc\WeaponPaints.dll") {
+        Copy-Item $weaponPaintsSrc "$AddonsDest\WeaponPaints" -Recurse -Force
+    }
+
+    $gamedataSrc = "$PluginsSrc\gamedata"
+    if (Test-Path $gamedataSrc) {
+        New-Item -ItemType Directory -Force -Path "$AddonsRoot\gamedata" | Out-Null
+        Copy-Item "$gamedataSrc\*" "$AddonsRoot\gamedata" -Recurse -Force
+    }
     Write-Success "Plugins copiados"
 } else {
     Write-Warn "Pasta plugins\ está vazia. Instale Metamod + CounterStrikeSharp em:"
