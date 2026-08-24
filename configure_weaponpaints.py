@@ -22,7 +22,7 @@ def main() -> None:
     config_path = Path(os.environ.get("WEAPONPAINTS_CONFIG", DEFAULT_CONFIG))
     required = {
         "DatabaseHost": os.environ.get("DB_HOST", ""),
-        "DatabasePort": os.environ.get("DB_PORT", "3306"),
+        "DatabasePort": int(os.environ.get("DB_PORT", "3306")),
         "DatabaseUser": os.environ.get("DB_USER", ""),
         "DatabasePassword": os.environ.get("DB_PASSWORD", ""),
         "DatabaseName": os.environ.get("DB_NAME", ""),
