@@ -50,6 +50,12 @@ if [ -z "${STEAM_TOKEN}" ]; then
   warn "Obtenha em: https://steamcommunity.com/dev/managegameservers"
 fi
 
+if command -v python3 >/dev/null 2>&1 && [ -f "${SCRIPT_DIR}/configure_weaponpaints.py" ]; then
+  if ! python3 "${SCRIPT_DIR}/configure_weaponpaints.py"; then
+    warn "Não foi possível atualizar a configuração do WeaponPaints."
+  fi
+fi
+
 # ─── Inicia CS2 ──────────────────────────────────────
 info "Iniciando CS2 Dedicated Server..."
 info "Nome:  ${SERVER_NAME:-CS2 Server 5x5}"
@@ -60,14 +66,17 @@ exec "${CS2_BINARY}" \
   -dedicated \
   -console \
   -usercon \
+  -game csgo \
+  -insecure \
   -nobots \
   -port "${SERVER_PORT:-27015}" \
   +game_type 0 \
   +game_mode 1 \
   +mapgroup mg_active \
-  +map "${START_MAP:-de_dust2}" \
+  +map "${START_MAP:-de_mirage}" \
   +sv_setsteamaccount "${STEAM_TOKEN:-}" \
   +hostname "${SERVER_NAME:-CS2 Server 5x5}" \
   +sv_password "${SERVER_PASSWORD:-}" \
   +sv_cheats 0 \
-  +sv_lan 0
+  +sv_lan 0 \
+  +mp_friendlyfire 0

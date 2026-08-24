@@ -69,23 +69,27 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 
 ---
 
-## 3. Instalar Metamod + CounterStrikeSharp
+## 3. Metamod e CounterStrikeSharp
 
-Esses dois são a base para rodar plugins. Vão para a pasta `addons/` dentro do CS2.
+Esses componentes são obrigatórios para carregar os plugins. O repositório mantém
+os frameworks separados por plataforma:
 
-### Metamod:Source
-1. Baixe em: https://www.sourcemm.net/downloads.php?branch=master
-   - Linux → versão **Linux CS2**
-   - Windows → versão **Windows CS2**
-2. Extraia em:
-   - Linux: `~/cs2server/game/csgo/addons/`
-   - Windows: `%USERPROFILE%\cs2server\game\csgo\addons\`
+```text
+game/linux/csgo/addons/    # Ubuntu 22.04 / Linux
+game/csgo/addons/          # Windows
+```
 
-### CounterStrikeSharp
-1. Baixe em: https://github.com/roflmuffin/CounterStrikeSharp/releases
-   - Linux → `counterstrikesharp-with-runtime-linux.zip`
-   - Windows → `counterstrikesharp-with-runtime-windows.zip`
-2. Extraia na mesma pasta `addons/`
+O `install.sh` copia somente `game/linux/csgo/addons/` para a VPS. O `install.ps1`
+usa os arquivos Windows. Não misture `win64/*.dll` com `linuxsteamrt64/*.so`.
+
+Os arquivos Linux incluídos foram baixados de:
+
+- CounterStrikeSharp `v1.0.372` com runtime:
+  https://github.com/roflmuffin/CounterStrikeSharp/releases/tag/v1.0.372
+- Metamod:Source Linux build `1410`:
+  https://www.sourcemm.net/downloads.php?branch=master
+
+Se atualizar esses frameworks, baixe sempre o pacote correspondente à plataforma.
 
 ---
 
@@ -96,10 +100,25 @@ Esses dois são a base para rodar plugins. Vão para a pasta `addons/` dentro do
 2. Coloque em: `plugins/MatchZy/`
 3. O `install.sh` / `install.ps1` copia automaticamente para o CS2
 
+### Retakes
+Plugin usado para partidas de retomada de bombsite.
+
+- Projeto: https://github.com/B3none/cs2-retakes
+- Arquivos já incluídos em `plugins/RetakesPlugin-3.1.0/`
+- Dependência `RetakesPluginShared` incluída
+
+### Deathmatch
+Plugin usado para respawn, FFA/Team Deathmatch, escolha de armas e modos personalizados.
+
+- Projeto: https://github.com/NockyCZ/CS2-Deathmatch
+- Arquivos já incluídos em `plugins/Deathmatch/`
+- O pacote inclui `DeathmatchAPI`, necessário para o plugin carregar
+
 ### WeaponPaints (skins, facas e luvas)
 1. Baixe em: https://github.com/Nereziel/cs2-WeaponPaints/releases
 2. Coloque em: `plugins/WeaponPaints/`
-3. Configure `plugins/WeaponPaints/WeaponPaints.json`:
+3. Depois do primeiro carregamento, configure:
+   `game/csgo/addons/counterstrikesharp/configs/plugins/WeaponPaints/WeaponPaints.json`
 
 ```json
 {
@@ -119,6 +138,14 @@ Esses dois são a base para rodar plugins. Vão para a pasta `addons/` dentro do
    # Windows (no MySQL Command Line Client)
    source caminho\para\mysql\init.sql
    ```
+
+> O `start.sh` e o `start.ps1` executam `configure_weaponpaints.py` antes de iniciar.
+> Ele lê `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` e `DB_NAME` do `.env` e atualiza
+> o `WeaponPaints.json` privado. Assim, não é necessário configurar o banco manualmente
+> depois de cada reinicialização.
+
+> Nunca publique `.env`, Steam Token ou senha do banco no GitHub. Como essas credenciais
+> já foram expostas durante a configuração, gere um novo Steam Token e troque a senha do banco.
 
 ---
 
@@ -149,26 +176,111 @@ Ou via menu **Jogar → Servidores da comunidade** (LAN).
 
 ---
 
-## 7. Comandos no jogo
+## 7. Comandos e modos
 
-### Jogadores
+### Competitivo / MatchZy
+
+Comandos de jogador:
+
 | Comando | Função |
 |---------|--------|
 | `!ready` | Marcar como pronto |
-| `!unready` | Desmarcar pronto |
+| `!unready` | Remover o estado pronto |
 | `!pause` | Solicitar pause |
-| `!unpause` | Tirar pause |
-| `!ws` | Menu de skins de armas |
-| `!knife` | Menu de skins de faca |
-| `!gloves` | Menu de luvas |
+| `!unpause` | Solicitar o fim do pause |
+| `!ws` | Abrir menu de skins |
+| `!knife` | Abrir menu de facas |
+| `!gloves` | Abrir menu de luvas |
 
-### Admin
+Comandos de admin:
+
 | Comando | Função |
 |---------|--------|
-| `!start` | Iniciar partida |
-| `!forcerestart` | Reiniciar partida |
-| `!forceend` | Encerrar partida |
-| `!map de_inferno` | Trocar mapa |
+| `!start` | Iniciar partida configurada |
+| `!forcerestart` | Reiniciar a partida |
+| `!forceend` | Encerrar a partida |
+| `!map <mapa>` | Trocar de mapa |
+
+### Practice
+
+Comandos principais do MatchZy:
+
+| Comando | Função |
+|---------|--------|
+| `.bot` | Adicionar/remover bots |
+| `.spawn` | Mostrar/usar posições de spawn |
+| `.ctspawn` | Ir para spawn CT |
+| `.tspawn` | Ir para spawn T |
+| `.nobots` | Remover bots |
+| `.rethrow` | Repetir a última granada |
+| `.last` | Repetir a última ação/lançamento |
+| `.timer` | Mostrar o timer de treino |
+| `.clear` | Limpar granadas |
+| `.exitprac` | Sair do practice |
+
+### Retakes
+
+O modo começa automaticamente quando o plugin está ativo e há jogadores suficientes.
+Use `!ready` somente se o MatchZy estiver controlando a partida.
+
+| Comando | Permissão | Função |
+|---------|-----------|--------|
+| `!mapconfigs` | Admin | Listar configurações de mapas |
+| `!mapconfig <mapa>` | Admin | Carregar config, por exemplo `!mapconfig de_mirage` |
+| `!forcebombsite A\|B` | Admin | Forçar o bombsite |
+| `!forcebombsitestop` | Admin | Remover o bombsite forçado |
+| `!scramble` | Admin | Embaralhar times na próxima rodada |
+| `!scrambleteams` | Admin | Alias de `!scramble` |
+| `!voices` | Jogador | Alternar anúncios de voz |
+| `!showspawns A\|B` | Admin | Mostrar spawns do bombsite |
+| `!spawns A\|B` | Admin | Alias de `!showspawns` |
+| `!addspawn <CT\|T> <Y\|N>` | Admin | Adicionar spawn |
+| `!removespawn` | Admin | Remover o spawn mais próximo |
+| `!nearestspawn` | Admin | Teleportar para o spawn mais próximo |
+| `!hidespawns` | Admin | Sair do editor de spawns |
+
+Comandos no console do servidor:
+
+```text
+retakes_enabled 1
+mp_restartgame 1
+```
+
+### Deathmatch
+
+O Deathmatch usa o modo nativo do CS2. Para iniciar pelo console do servidor:
+
+```text
+game_type 1
+game_mode 2
+map de_mirage
+```
+
+Comandos administrativos do plugin:
+
+| Comando | Função |
+|---------|--------|
+| `css_dm_startmode` | Definir/iniciar o modo configurado |
+| `css_dm_spawns` | Ativar/desativar editor de spawns |
+| `css_dm_spawnseditor` | Alias do editor de spawns |
+| `css_dm_editor` | Ativar/desativar editor de spawns |
+| `css_dm_checkdistance` | Verificar distância entre spawns |
+
+Os comandos de seleção de armas dependem da configuração do plugin e aparecem no
+menu do Deathmatch. Não use Deathmatch e Retakes simultaneamente no mesmo mapa.
+
+### Comandos gerais do servidor
+
+```text
+css_plugins list
+css_plugins load Deathmatch
+css_plugins unload Deathmatch
+css_plugins load RetakesPlugin
+css_plugins unload RetakesPlugin
+```
+
+`css_plugins` deve ser usado no console do servidor. Para trocar de modo, reinicie o
+mapa depois de carregar ou descarregar o plugin correspondente.
 
 ---
 

@@ -62,6 +62,14 @@ if ([string]::IsNullOrEmpty($steamToken)) {
     Write-Warn "Obtenha em: https://steamcommunity.com/dev/managegameservers"
 }
 
+$configurator = Join-Path $ScriptDir "configure_weaponpaints.py"
+if ((Test-Path $configurator) -and (Get-Command python -ErrorAction SilentlyContinue)) {
+    & python $configurator
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warn "Não foi possível atualizar a configuração do WeaponPaints."
+    }
+}
+
 $serverName     = Get-Env "SERVER_NAME"     "CS2 Server 5x5"
 $serverPassword = Get-Env "SERVER_PASSWORD" ""
 $serverPort     = Get-Env "SERVER_PORT"     "27015"
@@ -73,10 +81,12 @@ Write-Info "Porta: $serverPort"
 Write-Host ""
 
 # ─── Argumentos do servidor ──────────────────────────
-$args = @(
+$serverArgs = @(
     "-dedicated",
     "-console",
     "-usercon",
+    "-game", "csgo",
+    "-insecure",
     "-nobots",
     "-port", $serverPort,
     "+game_type", "0",
@@ -87,13 +97,14 @@ $args = @(
     "+hostname", $serverName,
     "+sv_password", $serverPassword,
     "+sv_cheats", "0",
-    "+sv_lan", "0"
+    "+sv_lan", "0",
+    "+mp_friendlyfire", "0"
 )
 
 # ─── Inicia CS2 ──────────────────────────────────────
 Push-Location $CS2Dir
 try {
-    & $CS2Binary @args
+    & $CS2Binary @serverArgs
 } finally {
     Pop-Location
 }

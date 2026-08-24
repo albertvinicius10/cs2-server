@@ -59,7 +59,7 @@ if (Test-Path $GameInfo) {
     $gameInfoText = Get-Content $GameInfo -Raw
     if ($gameInfoText -notmatch '(?m)^\s*Game\s+csgo/addons/metamod\s*$') {
         Copy-Item $GameInfo "$GameInfo.bak" -Force
-        $gameInfoText = $gameInfoText -replace '(?m)^(\s*Game_LowViolence\s+csgo_lv[^\r\n]*\r?\n)', '$1`t`tGame`tcsgo/addons/metamod`r`n'
+        $gameInfoText = $gameInfoText -replace '(?m)^(\s*Game_LowViolence\s+csgo_lv[^\r\n]*\r?\n)', ('$1' + "`t`tGame`tcsgo/addons/metamod`r`n")
         [System.IO.File]::WriteAllText($GameInfo, $gameInfoText, (New-Object System.Text.UTF8Encoding($false)))
         Write-Success "Metamod registrado no gameinfo.gi"
     }
@@ -67,12 +67,20 @@ if (Test-Path $GameInfo) {
 
 # ─── Copia configs ───────────────────────────────────
 $CfgDest = "$CS2Dir\game\csgo\cfg\matchzy"
+$AddonsRoot = "$CS2Dir\game\csgo\addons\counterstrikesharp"
 New-Item -ItemType Directory -Force -Path $CfgDest | Out-Null
 
 $serverCfg = "$ScriptDir\cfg\server.cfg"
 if (Test-Path $serverCfg) {
     Copy-Item $serverCfg "$CS2Dir\game\csgo\cfg\server.cfg" -Force
     Write-Success "server.cfg copiado"
+}
+
+$adminsCfg = "$ScriptDir\cfg\admins.json"
+if (Test-Path $adminsCfg) {
+    New-Item -ItemType Directory -Force -Path "$AddonsRoot\configs" | Out-Null
+    Copy-Item $adminsCfg "$AddonsRoot\configs\admins.json" -Force
+    Write-Success "admins.json copiado"
 }
 
 $matchzyCfg = "$ScriptDir\cfg\matchzy\matchzy.cfg"
@@ -95,7 +103,6 @@ if ((Test-Path $MetamodBinary) -and (Test-Path $CounterStrikeSharpBinary)) {
 
 # ─── Copia plugins ───────────────────────────────────
 $PluginsSrc  = "$ScriptDir\plugins"
-$AddonsRoot  = "$CS2Dir\game\csgo\addons\counterstrikesharp"
 $AddonsDest  = "$AddonsRoot\plugins"
 
 $pluginFiles = Get-ChildItem -Path $PluginsSrc -Exclude ".gitkeep" -ErrorAction SilentlyContinue
@@ -103,17 +110,28 @@ if ($pluginFiles) {
     Write-Info "Copiando plugins..."
     New-Item -ItemType Directory -Force -Path $AddonsDest | Out-Null
 
-    $matchzyPackage = Get-ChildItem -Path $PluginsSrc -Directory |
-        Where-Object { Test-Path "$($_.FullName)\addons\counterstrikesharp\plugins" } |
-        Select-Object -First 1
-    if ($matchzyPackage) {
-        Get-ChildItem -Path $AddonsDest -Directory -ErrorAction SilentlyContinue |
-            Where-Object { Test-Path "$($_.FullName)\addons\counterstrikesharp\plugins" } |
-            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-        Copy-Item "$($matchzyPackage.FullName)\addons\counterstrikesharp\plugins\*" $AddonsDest -Recurse -Force
-        if (Test-Path "$($matchzyPackage.FullName)\cfg\MatchZy") {
-            Copy-Item "$($matchzyPackage.FullName)\cfg\MatchZy" "$CS2Dir\game\csgo\cfg" -Recurse -Force
-        }
+    $matchzyRoot = "$PluginsSrc\MatchZy-0.8.15"
+    if (Test-Path "$matchzyRoot\addons\counterstrikesharp\plugins") {
+        Copy-Item "$matchzyRoot\addons\counterstrikesharp\plugins\*" $AddonsDest -Recurse -Force
+        Copy-Item "$matchzyRoot\cfg\MatchZy" "$CS2Dir\game\csgo\cfg" -Recurse -Force
+    }
+
+    $retakesRoot = "$PluginsSrc\RetakesPlugin-3.1.0\addons\counterstrikesharp"
+    if (Test-Path "$retakesRoot\plugins") {
+        Copy-Item "$retakesRoot\plugins\*" $AddonsDest -Recurse -Force
+    }
+    if (Test-Path "$retakesRoot\shared") {
+        New-Item -ItemType Directory -Force -Path "$AddonsRoot\shared" | Out-Null
+        Copy-Item "$retakesRoot\shared\*" "$AddonsRoot\shared" -Recurse -Force
+    }
+
+    $deathmatchSrc = "$PluginsSrc\Deathmatch"
+    if (Test-Path "$deathmatchSrc\Deathmatch.dll") {
+        Copy-Item $deathmatchSrc "$AddonsDest\Deathmatch" -Recurse -Force
+    }
+    if (Test-Path "$deathmatchSrc\shared") {
+        New-Item -ItemType Directory -Force -Path "$AddonsRoot\shared" | Out-Null
+        Copy-Item "$deathmatchSrc\shared\*" "$AddonsRoot\shared" -Recurse -Force
     }
 
     $weaponPaintsSrc = "$PluginsSrc\WeaponPaints"
