@@ -86,6 +86,16 @@ else
   warn "Frameworks Linux não encontrados em ${LINUX_ADDONS_SRC}"
 fi
 
+CORE_CONFIG="${CS2_DIR}/game/csgo/addons/counterstrikesharp/configs/core.json"
+CORE_EXAMPLE="${CS2_DIR}/game/csgo/addons/counterstrikesharp/configs/core.example.json"
+if [ -f "${CORE_EXAMPLE}" ] && [ ! -f "${CORE_CONFIG}" ]; then
+  cp "${CORE_EXAMPLE}" "${CORE_CONFIG}"
+fi
+if [ -f "${CORE_CONFIG}" ]; then
+  sed -i 's/"FollowCS2ServerGuidelines"[[:space:]]*:[[:space:]]*true/"FollowCS2ServerGuidelines": false/' "${CORE_CONFIG}"
+  success "Diretrizes do CounterStrikeSharp ajustadas para o WeaponPaints"
+fi
+
 # ─── Registra Metamod no gameinfo ─────────────────────
 GAMEINFO_FILE="${CS2_DIR}/game/csgo/gameinfo.gi"
 if [ -f "${GAMEINFO_FILE}" ] && ! grep -Eq '^[[:space:]]*Game[[:space:]]+csgo/addons/metamod[[:space:]]*$' "${GAMEINFO_FILE}"; then

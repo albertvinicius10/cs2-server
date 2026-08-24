@@ -83,6 +83,18 @@ if (Test-Path $adminsCfg) {
     Write-Success "admins.json copiado"
 }
 
+$coreConfig = "$AddonsRoot\configs\core.json"
+$coreExample = "$AddonsRoot\configs\core.example.json"
+if ((Test-Path $coreExample) -and -not (Test-Path $coreConfig)) {
+    Copy-Item $coreExample $coreConfig -Force
+}
+if (Test-Path $coreConfig) {
+    $coreText = Get-Content $coreConfig -Raw
+    $coreText = $coreText -replace '("FollowCS2ServerGuidelines"\s*:\s*)true', '${1}false'
+    [System.IO.File]::WriteAllText($coreConfig, $coreText, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Success "Diretrizes do CounterStrikeSharp ajustadas para o WeaponPaints"
+}
+
 $matchzyCfg = "$ScriptDir\cfg\matchzy\matchzy.cfg"
 if (Test-Path $matchzyCfg) {
     Copy-Item $matchzyCfg "$CfgDest\matchzy.cfg" -Force
