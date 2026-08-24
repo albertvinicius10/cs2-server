@@ -144,6 +144,11 @@ if ($pluginFiles) {
         New-Item -ItemType Directory -Force -Path "$AddonsRoot\gamedata" | Out-Null
         Copy-Item "$gamedataSrc\*" "$AddonsRoot\gamedata" -Recurse -Force
     }
+    $weaponPaintsGamedataSrc = "$weaponPaintsSrc\gamedata"
+    if (Test-Path $weaponPaintsGamedataSrc) {
+        New-Item -ItemType Directory -Force -Path "$AddonsRoot\gamedata" | Out-Null
+        Copy-Item "$weaponPaintsGamedataSrc\*" "$AddonsRoot\gamedata" -Recurse -Force
+    }
     Write-Success "Plugins copiados"
 } else {
     Write-Warn "Pasta plugins\ está vazia. Instale Metamod + CounterStrikeSharp em:"

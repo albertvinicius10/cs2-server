@@ -180,6 +180,10 @@ if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v 
     mkdir -p "${ADDONS_ROOT}/gamedata"
     cp -r "${PLUGINS_SRC}/gamedata/." "${ADDONS_ROOT}/gamedata/"
   fi
+  if [ -d "${WEAPONPAINTS_SRC}/gamedata" ]; then
+    mkdir -p "${ADDONS_ROOT}/gamedata"
+    cp -r "${WEAPONPAINTS_SRC}/gamedata/." "${ADDONS_ROOT}/gamedata/"
+  fi
   success "Plugins copiados"
 else
   warn "Pasta plugins/ está vazia. Instale Metamod + CounterStrikeSharp em ${ADDONS_DEST}/ manualmente."
