@@ -62,6 +62,9 @@ info "Nome:  ${SERVER_NAME:-CS2 Server 5x5}"
 info "Porta: ${SERVER_PORT:-27015}"
 echo ""
 
+# Garante que o libv8.so e demais libs do CS2 sejam encontrados
+export LD_LIBRARY_PATH="${CS2_DIR}/game/bin/linuxsteamrt64:${CS2_DIR}/bin/linuxsteamrt64:${LD_LIBRARY_PATH}"
+
 exec "${CS2_BINARY}" \
   -dedicated \
   -console \
