@@ -33,7 +33,12 @@ def main() -> None:
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
     if config_path.exists():
-        config = json.loads(config_path.read_text(encoding="utf-8"))
+        # Remove linhas de comentário // que o CounterStrikeSharp adiciona
+        raw = "\n".join(
+            line for line in config_path.read_text(encoding="utf-8").splitlines()
+            if not line.strip().startswith("//")
+        )
+        config = json.loads(raw)
     else:
         config = {"ConfigVersion": 10, "SkinsLanguage": "en"}
 
