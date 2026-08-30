@@ -71,7 +71,6 @@ exec "${CS2_BINARY}" \
   -usercon \
   -game csgo \
   -insecure \
-  -nobots \
   -port "${SERVER_PORT:-27015}" \
   +game_type 0 \
   +game_mode 1 \

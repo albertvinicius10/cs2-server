@@ -150,40 +150,59 @@ if [ -d "${MATCHZY_PRESETS_SRC}" ]; then
 fi
 
 # ─── Copia plugins ───────────────────────────────────
+# MatchZy  → plugins/         (carrega automático — modo padrão competitivo)
+# Retakes  → plugins/disabled/ (não carrega automático — reservado para futuro)
+# Deathmatch→ plugins/disabled/
+# WeaponPaints → plugins/     (sempre ativo)
 PLUGINS_SRC="${SCRIPT_DIR}/plugins"
 ADDONS_ROOT="${CS2_DIR}/game/csgo/addons/counterstrikesharp"
 ADDONS_DEST="${ADDONS_ROOT}/plugins"
+DISABLED_DEST="${ADDONS_DEST}/disabled"
 
 if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v .gitkeep)" ]; then
   info "Copiando plugins..."
-  mkdir -p "${ADDONS_DEST}"
+  mkdir -p "${ADDONS_DEST}" "${DISABLED_DEST}"
 
+  # Limpa versões antigas para evitar acúmulo
+  rm -rf "${ADDONS_DEST}/MatchZy"
+  rm -rf "${DISABLED_DEST}/RetakesPlugin"
+  rm -rf "${DISABLED_DEST}/Deathmatch"
+
+  # MatchZy → plugins/ (carrega automático no startup)
   MATCHZY_ROOT="${PLUGINS_SRC}/MatchZy-0.8.15"
-  if [ -d "${MATCHZY_ROOT}/addons/counterstrikesharp/plugins" ]; then
-    cp -r "${MATCHZY_ROOT}/addons/counterstrikesharp/plugins/." "${ADDONS_DEST}/"
+  if [ -d "${MATCHZY_ROOT}/addons/counterstrikesharp/plugins/MatchZy" ]; then
+    cp -r "${MATCHZY_ROOT}/addons/counterstrikesharp/plugins/MatchZy" "${ADDONS_DEST}/"
+    success "MatchZy copiado para plugins/ (auto-load)"
   fi
 
+  # RetakesPlugin → plugins/disabled/ (não carrega automático)
   RETAKES_ROOT="${PLUGINS_SRC}/RetakesPlugin-3.1.0/addons/counterstrikesharp"
-  if [ -d "${RETAKES_ROOT}/plugins" ]; then
-    cp -r "${RETAKES_ROOT}/plugins/." "${ADDONS_DEST}/"
+  if [ -d "${RETAKES_ROOT}/plugins/RetakesPlugin" ]; then
+    cp -r "${RETAKES_ROOT}/plugins/RetakesPlugin" "${DISABLED_DEST}/"
+    success "RetakesPlugin copiado para plugins/disabled/"
   fi
   if [ -d "${RETAKES_ROOT}/shared" ]; then
     mkdir -p "${ADDONS_ROOT}/shared"
     cp -r "${RETAKES_ROOT}/shared/." "${ADDONS_ROOT}/shared/"
   fi
 
+  # Deathmatch → plugins/disabled/ (não carrega automático)
   DEATHMATCH_SRC="${PLUGINS_SRC}/Deathmatch"
   if [ -f "${DEATHMATCH_SRC}/Deathmatch.dll" ]; then
-    cp -r "${DEATHMATCH_SRC}" "${ADDONS_DEST}/"
+    cp -r "${DEATHMATCH_SRC}" "${DISABLED_DEST}/"
+    success "Deathmatch copiado para plugins/disabled/"
   fi
   if [ -d "${DEATHMATCH_SRC}/shared" ]; then
     mkdir -p "${ADDONS_ROOT}/shared"
     cp -r "${DEATHMATCH_SRC}/shared/." "${ADDONS_ROOT}/shared/"
   fi
 
+  # WeaponPaints → plugins/ (sempre ativo)
   WEAPONPAINTS_SRC="${PLUGINS_SRC}/WeaponPaints"
   if [ -f "${WEAPONPAINTS_SRC}/WeaponPaints.dll" ]; then
+    rm -rf "${ADDONS_DEST}/WeaponPaints"
     cp -r "${WEAPONPAINTS_SRC}" "${ADDONS_DEST}/"
+    success "WeaponPaints copiado para plugins/"
   fi
 
   if [ -d "${PLUGINS_SRC}/gamedata" ]; then
