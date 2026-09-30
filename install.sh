@@ -37,17 +37,17 @@ if ! command -v steamcmd &>/dev/null && [ ! -f "${STEAMCMD_DIR}/steamcmd.sh" ]; 
   # Detecta distro
   if command -v apt-get &>/dev/null; then
     sudo apt-get update -qq
-    sudo apt-get install -y lib32gcc-s1 curl tar
+    sudo apt-get install -y lib32gcc-s1 curl tar unzip
     mkdir -p "${STEAMCMD_DIR}"
     curl -sSL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" \
       | tar -xz -C "${STEAMCMD_DIR}"
   elif command -v dnf &>/dev/null; then
-    sudo dnf install -y glibc.i686 curl tar
+    sudo dnf install -y glibc.i686 curl tar unzip
     mkdir -p "${STEAMCMD_DIR}"
     curl -sSL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" \
       | tar -xz -C "${STEAMCMD_DIR}"
   elif command -v pacman &>/dev/null; then
-    sudo pacman -S --noconfirm lib32-gcc-libs curl tar
+    sudo pacman -S --noconfirm lib32-gcc-libs curl tar unzip
     mkdir -p "${STEAMCMD_DIR}"
     curl -sSL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" \
       | tar -xz -C "${STEAMCMD_DIR}"
@@ -213,6 +213,33 @@ if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v 
     mkdir -p "${ADDONS_ROOT}/gamedata"
     cp -r "${WEAPONPAINTS_SRC}/gamedata/." "${ADDONS_ROOT}/gamedata/"
   fi
+
+  # MenuManager → plugins/ (requerido pelo WeaponPaints para luvas e menus)
+  MENU_MANAGER_DLL="${ADDONS_DEST}/MenuManager/MenuManager.dll"
+  if [ ! -f "${MENU_MANAGER_DLL}" ]; then
+    info "Baixando MenuManager (requerido pelo WeaponPaints para luvas)..."
+    MM_URL=$(curl -s "https://api.github.com/repos/NickFox007/MenuManagerCS2/releases/latest" \
+      | grep -o '"browser_download_url": *"[^"]*\.zip"' | grep -o 'https://[^"]*' | head -1)
+    if [ -n "${MM_URL}" ]; then
+      TMP_ZIP=$(mktemp /tmp/menumanager-XXXXX.zip)
+      TMP_DIR=$(mktemp -d /tmp/menumanager-XXXXX)
+      curl -sSL "${MM_URL}" -o "${TMP_ZIP}"
+      unzip -q "${TMP_ZIP}" -d "${TMP_DIR}"
+      rm -f "${TMP_ZIP}"
+      if [ -d "${TMP_DIR}/addons/counterstrikesharp/plugins" ]; then
+        cp -r "${TMP_DIR}/addons/counterstrikesharp/plugins/." "${ADDONS_DEST}/"
+      else
+        cp -r "${TMP_DIR}/." "${ADDONS_DEST}/"
+      fi
+      rm -rf "${TMP_DIR}"
+      success "MenuManager instalado"
+    else
+      warn "Não foi possível baixar MenuManager. Baixe manualmente em: https://github.com/NickFox007/MenuManagerCS2/releases"
+    fi
+  else
+    success "MenuManager já instalado"
+  fi
+
   success "Plugins copiados"
 else
   warn "Pasta plugins/ está vazia. Instale Metamod + CounterStrikeSharp em ${ADDONS_DEST}/ manualmente."
