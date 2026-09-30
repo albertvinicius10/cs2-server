@@ -228,6 +228,13 @@ if ($pluginFiles) {
         Copy-Item "$deathmatchSrc\shared\*" "$AddonsRoot\shared" -Recurse -Force
     }
 
+    # Remove diretório órfão do AnyBaseLib instalado no lugar errado (install anterior)
+    $staleAnyBase = "$AddonsRoot\plugins\addons"
+    if (Test-Path $staleAnyBase) {
+        Remove-Item $staleAnyBase -Recurse -Force
+        Write-Success "Diretório órfão de AnyBaseLib removido"
+    }
+
     $weaponPaintsSrc = "$PluginsSrc\WeaponPaints"
     if (Test-Path "$weaponPaintsSrc\WeaponPaints.dll") {
         Copy-Item $weaponPaintsSrc "$AddonsDest\WeaponPaints" -Recurse -Force

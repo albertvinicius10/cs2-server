@@ -197,6 +197,12 @@ if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v 
     cp -r "${DEATHMATCH_SRC}/shared/." "${ADDONS_ROOT}/shared/"
   fi
 
+  # Remove diretório órfão do AnyBaseLib instalado no lugar errado (install anterior)
+  if [ -d "${ADDONS_ROOT}/plugins/addons" ]; then
+    rm -rf "${ADDONS_ROOT}/plugins/addons"
+    success "Diretório órfão de AnyBaseLib removido"
+  fi
+
   # WeaponPaints → plugins/ (sempre ativo)
   WEAPONPAINTS_SRC="${PLUGINS_SRC}/WeaponPaints"
   if [ -f "${WEAPONPAINTS_SRC}/WeaponPaints.dll" ]; then
