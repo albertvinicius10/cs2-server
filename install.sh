@@ -220,49 +220,6 @@ if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v 
     cp -r "${WEAPONPAINTS_SRC}/gamedata/." "${ADDONS_ROOT}/gamedata/"
   fi
 
-  # Helper: baixa plugin do NickFox007
-  install_nickfox_plugin() {
-    local NAME="$1" REPO="$2" CHECK_DLL="$3"
-    if [ -f "${CHECK_DLL}" ]; then
-      success "${NAME} já instalado"
-      return
-    fi
-    info "Baixando ${NAME}..."
-    local URL
-    URL=$(curl -s "https://api.github.com/repos/NickFox007/${REPO}/releases/latest" \
-      | grep -o '"browser_download_url": *"[^"]*\.zip"' | grep -o 'https://[^"]*' | head -1)
-    if [ -z "${URL}" ]; then
-      warn "Não foi possível baixar ${NAME}. Baixe manualmente em: https://github.com/NickFox007/${REPO}/releases"
-      return
-    fi
-    local TMP_ZIP TMP_DIR
-    TMP_ZIP=$(mktemp /tmp/nickfox-XXXXX.zip)
-    TMP_DIR=$(mktemp -d /tmp/nickfox-XXXXX)
-    curl -sSL "${URL}" -o "${TMP_ZIP}"
-    unzip -q "${TMP_ZIP}" -d "${TMP_DIR}"
-    rm -f "${TMP_ZIP}"
-    if [ -d "${TMP_DIR}/addons/counterstrikesharp" ]; then
-      if [ -d "${TMP_DIR}/addons/counterstrikesharp/plugins" ]; then
-        cp -r "${TMP_DIR}/addons/counterstrikesharp/plugins/." "${ADDONS_DEST}/"
-      fi
-      if [ -d "${TMP_DIR}/addons/counterstrikesharp/shared" ]; then
-        mkdir -p "${ADDONS_ROOT}/shared"
-        cp -r "${TMP_DIR}/addons/counterstrikesharp/shared/." "${ADDONS_ROOT}/shared/"
-      fi
-    else
-      cp -r "${TMP_DIR}/." "${ADDONS_DEST}/"
-    fi
-    rm -rf "${TMP_DIR}"
-    success "${NAME} instalado"
-  }
-
-  # AnyBaseLib → PlayerSettings → MenuManager (cadeia de dependências)
-  install_nickfox_plugin "AnyBaseLib"     "AnyBaseLibCS2"     "${ADDONS_ROOT}/shared/AnyBaseLib/AnyBaseLib.dll"
-  install_nickfox_plugin "PlayerSettings" "PlayerSettingsCS2" "${ADDONS_DEST}/PlayerSettings/PlayerSettings.dll"
-
-  # MenuManager → requerido pelo WeaponPaints para luvas e menus
-  install_nickfox_plugin "MenuManager" "MenuManagerCS2" "${ADDONS_DEST}/MenuManagerCore/MenuManagerCore.dll"
-
   success "Plugins copiados"
 else
   warn "Pasta plugins/ está vazia. Instale Metamod + CounterStrikeSharp em ${ADDONS_DEST}/ manualmente."
