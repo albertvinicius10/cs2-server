@@ -178,7 +178,8 @@ function Install-NickFoxPlugin($name, $repo, $checkDll) {
     }
 }
 
-# ─── Baixa PlayerSettings (dependência do MenuManager) ──
+# ─── Baixa AnyBaseLib → PlayerSettings → MenuManager ────
+Install-NickFoxPlugin "AnyBaseLib"    "AnyBaseLibCS2"     "$AddonsRoot\plugins\AnyBaseLib\AnyBaseLib.dll"
 Install-NickFoxPlugin "PlayerSettings" "PlayerSettingsCS2" "$AddonsRoot\plugins\PlayerSettings\PlayerSettings.dll"
 
 # ─── Baixa MenuManager ──────────────────────────────

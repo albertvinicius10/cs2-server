@@ -248,7 +248,8 @@ if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v 
     success "${NAME} instalado"
   }
 
-  # PlayerSettings → dependência do MenuManager
+  # AnyBaseLib → PlayerSettings → MenuManager (cadeia de dependências)
+  install_nickfox_plugin "AnyBaseLib"     "AnyBaseLibCS2"     "${ADDONS_DEST}/AnyBaseLib/AnyBaseLib.dll"
   install_nickfox_plugin "PlayerSettings" "PlayerSettingsCS2" "${ADDONS_DEST}/PlayerSettings/PlayerSettings.dll"
 
   # MenuManager → requerido pelo WeaponPaints para luvas e menus
