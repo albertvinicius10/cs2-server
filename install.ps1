@@ -101,16 +101,50 @@ if (Test-Path $matchzyCfg) {
     Write-Success "matchzy.cfg copiado"
 }
 
-# ─── Verifica Metamod + CounterStrikeSharp ────────────
-$AddonSource = "$ScriptDir\game\csgo\addons"
-$MetamodBinary = "$AddonSource\metamod\bin\win64\server.dll"
-$CounterStrikeSharpBinary = "$AddonSource\counterstrikesharp\bin\win64\counterstrikesharp.dll"
-if ((Test-Path $MetamodBinary) -and (Test-Path $CounterStrikeSharpBinary)) {
-    Copy-Item "$AddonSource\*" "$CS2Dir\game\csgo\addons" -Recurse -Force
-    Write-Success "Metamod + CounterStrikeSharp copiados"
+# ─── Baixa Metamod + CounterStrikeSharp Windows ──────
+$CSS_VERSION = "1.0.372"
+$MMBuild     = "1410"
+$CSS_URL     = "https://github.com/roflmuffin/CounterStrikeSharp/releases/download/v$CSS_VERSION/counterstrikesharp-with-runtime-windows-$CSS_VERSION.zip"
+$METAMOD_URL = "https://github.com/alliedmodders/metamod-source/releases/download/2.0.0.$MMBuild/mmsource-2.0.0-git$MMBuild-windows.zip"
+$CS2Addons   = "$CS2Dir\game\csgo\addons"
+$MetamodDll  = "$CS2Addons\metamod\bin\win64\server.dll"
+$CSSDll      = "$CS2Addons\counterstrikesharp\bin\win64\counterstrikesharp.dll"
+
+if (-not (Test-Path $MetamodDll)) {
+    Write-Info "Baixando Metamod:Source Windows (build $MMBuild)..."
+    $zip = "$env:TEMP\metamod-win.zip"
+    $tmp = "$env:TEMP\metamod-win-extract"
+    Invoke-WebRequest -Uri $METAMOD_URL -OutFile $zip -UseBasicParsing
+    if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
+    Expand-Archive -Path $zip -DestinationPath $tmp -Force
+    Remove-Item $zip
+    Copy-Item "$tmp\addons\*" $CS2Addons -Recurse -Force
+    Remove-Item $tmp -Recurse -Force
+    Write-Success "Metamod instalado"
 } else {
-    Write-Warn "Metamod/CounterStrikeSharp não estão completos no projeto."
-    Write-Warn "Baixe os pacotes Windows e extraia em $CS2Dir\game\csgo\addons\"
+    Write-Success "Metamod já instalado"
+}
+
+if (-not (Test-Path $CSSDll)) {
+    Write-Info "Baixando CounterStrikeSharp v$CSS_VERSION Windows (com runtime)..."
+    $zip = "$env:TEMP\css-win.zip"
+    $tmp = "$env:TEMP\css-win-extract"
+    Invoke-WebRequest -Uri $CSS_URL -OutFile $zip -UseBasicParsing
+    if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
+    Expand-Archive -Path $zip -DestinationPath $tmp -Force
+    Remove-Item $zip
+    Copy-Item "$tmp\addons\*" $CS2Addons -Recurse -Force
+    Remove-Item $tmp -Recurse -Force
+    Write-Success "CounterStrikeSharp instalado"
+} else {
+    Write-Success "CounterStrikeSharp já instalado"
+}
+
+# Copia configs do repo (vdf, gamedata, lang, api — sem sobrescrever bin/)
+$AddonSource = "$ScriptDir\game\csgo\addons"
+if (Test-Path $AddonSource) {
+    Copy-Item "$AddonSource\*" $CS2Addons -Recurse -Force
+    Write-Success "Configs de addons copiadas"
 }
 
 # ─── Copia plugins ───────────────────────────────────

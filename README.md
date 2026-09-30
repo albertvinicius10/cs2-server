@@ -1,7 +1,15 @@
-# CS2 Server 5x5 — Linux & Windows
+# CS2 Dedicated Server — 5x5 Competitivo
 
-Servidor competitivo CS2 com **MatchZy** e **WeaponPaints** (skins/facas/luvas).  
+Servidor dedicado de CS2 pronto para uso competitivo, com suporte a skins via banco de dados.  
 Funciona nativamente no **Linux** e no **Windows** — sem Docker.
+
+**Plugins ativos por padrão:**
+- [MatchZy](https://github.com/shobhit-pathak/MatchZy) — modo competitivo 5x5 com knife round, pause, practice e estatísticas
+- [WeaponPaints](https://github.com/Nereziel/cs2-WeaponPaints) — skins, facas e luvas persistidas por Steam ID via MySQL
+
+**Plugins incluídos, desativados por padrão:**
+- [RetakesPlugin](https://github.com/B3none/cs2-retakes) — modo retake de bombsite
+- [Deathmatch](https://github.com/NockyCZ/CS2-Deathmatch) — respawn contínuo com seleção de armas
 
 ---
 
@@ -12,302 +20,277 @@ Funciona nativamente no **Linux** e no **Windows** — sem Docker.
 | **Sistema** | Ubuntu 20.04+, Debian 11+, Fedora 37+, Arch | Windows 10/11 64-bit |
 | **RAM** | 8 GB+ | 8 GB+ |
 | **Disco** | 35 GB livres | 35 GB livres |
-| **PowerShell** | — | 5.1+ (já incluso no Windows 10+) |
+| **Python** | `python3` (geralmente já incluso) | [Python 3.x](https://python.org/downloads) |
 | **MySQL** | `sudo apt install mysql-server` | [MySQL Community](https://dev.mysql.com/downloads/mysql/) |
+| **PowerShell** | — | 5.1+ (já incluso no Windows 10+) |
 
 ---
 
 ## 1. Configuração inicial
 
-### 1.1 Copie e edite o `.env`
+### 1.1 Copie o `.env`
 
 ```bash
+# Linux
 cp .env.example .env
+
+# Windows (PowerShell)
+Copy-Item .env.example .env
 ```
 
-Edite o `.env`:
+Edite o `.env` com seus valores:
 
 ```env
-SERVER_NAME="Meu Servidor 5x5"
-SERVER_PASSWORD=        # vazio = sem senha
+SERVER_NAME="CS2 Server 5x5"
+SERVER_PASSWORD=          # vazio = sem senha
 SERVER_PORT=27015
-START_MAP=de_dust2
+START_MAP=de_mirage
 
-STEAM_TOKEN=            # veja abaixo como obter
+STEAM_TOKEN=              # necessário para aparecer na lista pública
+
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=cs2user
+DB_PASSWORD=troque-esta-senha
+DB_NAME=cs2
 ```
 
-### 1.2 Steam Token (para servidor público)
+### 1.2 Steam Game Server Token
+
+Obrigatório para o servidor aparecer na lista pública. Para uso apenas na LAN, pode deixar vazio.
 
 1. Acesse: https://steamcommunity.com/dev/managegameservers
-2. Crie com **App ID: 730**
+2. Crie um token com **App ID: 730**
 3. Cole no `.env` → `STEAM_TOKEN=SEU_TOKEN`
-
-> Para teste local na LAN, pode deixar em branco.
 
 ---
 
-## 2. Instalar o servidor CS2
+## 2. Banco de dados (WeaponPaints)
 
-### No Linux
+O WeaponPaints requer um banco MySQL para persistir as skins dos jogadores.
+
+**Crie o usuário e importe o schema:**
+
+```sql
+-- Linux
+mysql -u root -p < mysql/init.sql
+
+-- Windows (MySQL Command Line Client)
+source C:\caminho\para\mysql\init.sql
+```
+
+O arquivo `mysql/init.sql` cria o banco, as tabelas e o usuário `cs2user` automaticamente.
+
+> As credenciais do banco são lidas do `.env` pelos scripts de inicialização — não é necessário editar o `WeaponPaints.json` manualmente.
+
+---
+
+## 3. Instalar
+
+### Linux
 
 ```bash
 bash install.sh
 ```
 
-O script instala o SteamCMD automaticamente e baixa o CS2 (~30 GB).
-
-### No Windows
-
-Abra o **PowerShell como Administrador** e execute:
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-.\install.ps1
-```
-
-> O CS2 será instalado em `%USERPROFILE%\cs2server`
-
----
-
-## 3. Metamod e CounterStrikeSharp
-
-Esses componentes são obrigatórios para carregar os plugins. O repositório mantém
-os frameworks separados por plataforma:
-
-```text
-game/linux/csgo/addons/    # Ubuntu 22.04 / Linux
-game/csgo/addons/          # Windows
-```
-
-O `install.sh` copia somente `game/linux/csgo/addons/` para a VPS. O `install.ps1`
-usa os arquivos Windows. Não misture `win64/*.dll` com `linuxsteamrt64/*.so`.
-
-Os arquivos Linux incluídos foram baixados de:
-
-- CounterStrikeSharp `v1.0.372` com runtime:
-  https://github.com/roflmuffin/CounterStrikeSharp/releases/tag/v1.0.372
-- Metamod:Source Linux build `1410`:
-  https://www.sourcemm.net/downloads.php?branch=master
-
-Se atualizar esses frameworks, baixe sempre o pacote correspondente à plataforma.
-
----
-
-## 4. Instalar plugins
-
-### MatchZy
-1. Baixe em: https://github.com/shobhit-pathak/MatchZy/releases
-2. Coloque em: `plugins/MatchZy/`
-3. O `install.sh` / `install.ps1` copia automaticamente para o CS2
-
-### Retakes
-Plugin usado para partidas de retomada de bombsite.
-
-- Projeto: https://github.com/B3none/cs2-retakes
-- Arquivos já incluídos em `plugins/RetakesPlugin-3.1.0/`
-- Dependência `RetakesPluginShared` incluída
-
-### Deathmatch
-Plugin usado para respawn, FFA/Team Deathmatch, escolha de armas e modos personalizados.
-
-- Projeto: https://github.com/NockyCZ/CS2-Deathmatch
-- Arquivos já incluídos em `plugins/Deathmatch/`
-- O pacote inclui `DeathmatchAPI`, necessário para o plugin carregar
-
-### WeaponPaints (skins, facas e luvas)
-1. Baixe em: https://github.com/Nereziel/cs2-WeaponPaints/releases
-2. Coloque em: `plugins/WeaponPaints/`
-3. Depois do primeiro carregamento, configure:
-   `game/csgo/addons/counterstrikesharp/configs/plugins/WeaponPaints/WeaponPaints.json`
-
-```json
-{
-  "DatabaseHost": "localhost",
-  "DatabasePort": 3306,
-  "DatabaseUser": "cs2user",
-  "DatabasePassword": "cs2senha123",
-  "DatabaseName": "cs2"
-}
-```
-
-4. Importe o banco de dados:
-   ```bash
-   # Linux
-   mysql -u root -p < mysql/init.sql
-
-   # Windows (no MySQL Command Line Client)
-   source caminho\para\mysql\init.sql
-   ```
-
-> O `start.sh` e o `start.ps1` executam `configure_weaponpaints.py` antes de iniciar.
-> Ele lê `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` e `DB_NAME` do `.env` e atualiza
-> o `WeaponPaints.json` privado. Assim, não é necessário configurar o banco manualmente
-> depois de cada reinicialização.
-
-> Nunca publique `.env`, Steam Token ou senha do banco no GitHub. Como essas credenciais
-> já foram expostas durante a configuração, gere um novo Steam Token e troque a senha do banco.
-
----
-
-## 5. Iniciar o servidor
-
-### Linux
-
-```bash
-bash start.sh
-```
+O script:
+- Instala o SteamCMD (detecta apt, dnf ou pacman)
+- Baixa o CS2 (~30 GB) via SteamCMD
+- Copia Metamod + CounterStrikeSharp (incluídos no repo)
+- Registra o Metamod no `gameinfo.gi`
+- Copia configs e plugins para o CS2
 
 ### Windows
 
+Abra o **PowerShell** e execute:
+
 ```powershell
-.\start.ps1
+# Necessário apenas uma vez por máquina
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+.\install.ps1
 ```
+
+O script faz tudo automaticamente:
+- Baixa o SteamCMD
+- Baixa o CS2 (~30 GB)
+- **Baixa e instala Metamod + CounterStrikeSharp** (apenas na primeira vez)
+- Registra o Metamod no `gameinfo.gi`
+- Copia configs e plugins para o CS2
+
+> O CS2 é instalado em `%USERPROFILE%\cs2server`
 
 ---
 
-## 6. Conectar ao servidor
+## 4. Iniciar o servidor
+
+```bash
+# Linux
+bash start.sh
+
+# Windows
+.\start.ps1
+```
+
+Antes de iniciar o CS2, o script executa `configure_weaponpaints.py`, que lê as variáveis `DB_*` do `.env` e atualiza o `WeaponPaints.json` instalado. Isso garante que as credenciais do banco nunca precisem ser editadas manualmente.
+
+---
+
+## 5. Conectar
 
 No console do CS2:
+
+```
+connect SEU_IP:27015
+```
+
+Para conectar localmente:
+
 ```
 connect localhost:27015
 ```
 
-Ou via menu **Jogar → Servidores da comunidade** (LAN).
-
 ---
 
-## 7. Comandos e modos
+## 6. Referência de comandos
 
-### Competitivo / MatchZy
+### MatchZy — Competitivo
 
-Comandos de jogador:
+O servidor inicia em modo de **warmup**. A partida só começa após todos os 10 jogadores confirmarem `!ready`.
+
+**Comandos de jogador (chat):**
 
 | Comando | Função |
 |---------|--------|
-| `!ready` | Marcar como pronto |
-| `!unready` | Remover o estado pronto |
-| `!pause` | Solicitar pause |
-| `!unpause` | Solicitar o fim do pause |
+| `!ready` | Confirmar prontidão |
+| `!unready` | Cancelar prontidão |
+| `!pause` | Solicitar pausa técnica |
+| `!unpause` | Solicitar fim da pausa |
 | `!ws` | Abrir menu de skins |
 | `!knife` | Abrir menu de facas |
 | `!gloves` | Abrir menu de luvas |
 
-Comandos de admin:
+**Comandos de admin (chat):**
 
 | Comando | Função |
 |---------|--------|
-| `!start` | Iniciar partida configurada |
-| `!forcerestart` | Reiniciar a partida |
-| `!forceend` | Encerrar a partida |
+| `!start` | Forçar início da partida |
+| `!forcerestart` | Reiniciar partida |
+| `!forceend` | Encerrar partida |
 | `!map <mapa>` | Trocar de mapa |
 
-### Practice
+### MatchZy — Practice
 
-Comandos principais do MatchZy:
+Para entrar no modo practice, um admin usa `!prac` no chat.
 
 | Comando | Função |
 |---------|--------|
-| `.bot` | Adicionar/remover bots |
-| `.spawn` | Mostrar/usar posições de spawn |
-| `.ctspawn` | Ir para spawn CT |
-| `.tspawn` | Ir para spawn T |
-| `.nobots` | Remover bots |
-| `.rethrow` | Repetir a última granada |
-| `.last` | Repetir a última ação/lançamento |
-| `.timer` | Mostrar o timer de treino |
-| `.clear` | Limpar granadas |
+| `.bot` | Adicionar/remover bot |
+| `.nobots` | Remover todos os bots |
+| `.ctspawn` | Teleportar para spawn CT |
+| `.tspawn` | Teleportar para spawn T |
+| `.rethrow` | Repetir o último lançamento de granada |
+| `.last` | Repetir a última ação |
+| `.clear` | Limpar granadas do mapa |
+| `.timer` | Exibir timer de treino |
 | `.exitprac` | Sair do practice |
 
-### Retakes
+---
 
-O modo começa automaticamente quando o plugin está ativo e há jogadores suficientes.
-Use `!ready` somente se o MatchZy estiver controlando a partida.
+## 7. Modos opcionais
 
-| Comando | Permissão | Função |
-|---------|-----------|--------|
-| `!mapconfigs` | Admin | Listar configurações de mapas |
-| `!mapconfig <mapa>` | Admin | Carregar config, por exemplo `!mapconfig de_mirage` |
-| `!forcebombsite A\|B` | Admin | Forçar o bombsite |
-| `!forcebombsitestop` | Admin | Remover o bombsite forçado |
-| `!scramble` | Admin | Embaralhar times na próxima rodada |
-| `!scrambleteams` | Admin | Alias de `!scramble` |
-| `!voices` | Jogador | Alternar anúncios de voz |
-| `!showspawns A\|B` | Admin | Mostrar spawns do bombsite |
-| `!spawns A\|B` | Admin | Alias de `!showspawns` |
-| `!addspawn <CT\|T> <Y\|N>` | Admin | Adicionar spawn |
-| `!removespawn` | Admin | Remover o spawn mais próximo |
-| `!nearestspawn` | Admin | Teleportar para o spawn mais próximo |
-| `!hidespawns` | Admin | Sair do editor de spawns |
+Retakes e Deathmatch são instalados em `plugins/disabled/` e **não carregam automaticamente**.
 
-Comandos no console do servidor:
+### Ativar Retakes
 
-```text
-retakes_enabled 1
+No console do servidor:
+
+```
+css_plugins load RetakesPlugin
 mp_restartgame 1
 ```
 
-### Deathmatch
+Para desativar:
 
-O Deathmatch usa o modo nativo do CS2. Para iniciar pelo console do servidor:
+```
+css_plugins unload RetakesPlugin
+```
 
-```text
+**Comandos de admin do Retakes:**
+
+| Comando | Função |
+|---------|--------|
+| `!mapconfig <mapa>` | Carregar config do mapa (ex: `!mapconfig de_mirage`) |
+| `!forcebombsite A\|B` | Forçar bombsite específico |
+| `!forcebombsitestop` | Remover bombsite forçado |
+| `!scramble` | Embaralhar times na próxima rodada |
+| `!showspawns A\|B` | Exibir spawns do bombsite |
+| `!addspawn <CT\|T> <Y\|N>` | Adicionar spawn |
+| `!removespawn` | Remover spawn mais próximo |
+
+### Ativar Deathmatch
+
+```
+css_plugins load Deathmatch
 game_type 1
 game_mode 2
 map de_mirage
 ```
 
-Comandos administrativos do plugin:
+Para desativar:
 
-| Comando | Função |
-|---------|--------|
-| `css_dm_startmode` | Definir/iniciar o modo configurado |
-| `css_dm_spawns` | Ativar/desativar editor de spawns |
-| `css_dm_spawnseditor` | Alias do editor de spawns |
-| `css_dm_editor` | Ativar/desativar editor de spawns |
-| `css_dm_checkdistance` | Verificar distância entre spawns |
-
-Os comandos de seleção de armas dependem da configuração do plugin e aparecem no
-menu do Deathmatch. Não use Deathmatch e Retakes simultaneamente no mesmo mapa.
-
-### Comandos gerais do servidor
-
-```text
-css_plugins list
-css_plugins load Deathmatch
+```
 css_plugins unload Deathmatch
-css_plugins load RetakesPlugin
-css_plugins unload RetakesPlugin
 ```
 
-`css_plugins` deve ser usado no console do servidor. Para trocar de modo, reinicie o
-mapa depois de carregar ou descarregar o plugin correspondente.
+> Não use Retakes e Deathmatch simultaneamente. Após trocar de modo, reinicie o mapa.
 
 ---
 
-## 8. Estrutura de arquivos
+## 8. Frameworks (Metamod + CounterStrikeSharp)
+
+| Plataforma | Versão | Como é instalado |
+|------------|--------|-----------------|
+| **Linux** | CSS v1.0.372 · Metamod build 1410 | Incluído no repo em `game/linux/csgo/addons/`, copiado pelo `install.sh` |
+| **Windows** | CSS v1.0.372 · Metamod build 1410 | Baixado automaticamente pelo `install.ps1` na primeira instalação |
+
+Para atualizar as versões Windows, edite as variáveis `$CSS_VERSION` e `$MMBuild` em `install.ps1`.
+
+---
+
+## 9. Estrutura do repositório
 
 ```
 cs2-server/
-├── .env                    ← suas configurações (não suba no git!)
-├── .env.example            ← modelo do .env
-├── install.sh              ← instala CS2 no Linux
-├── install.ps1             ← instala CS2 no Windows
-├── start.sh                ← inicia o servidor no Linux
-├── start.ps1               ← inicia o servidor no Windows
+├── .env.example                ← modelo de configuração
+├── .env                        ← suas configs locais (não sobe no git)
+├── install.sh                  ← instalador Linux
+├── install.ps1                 ← instalador Windows
+├── start.sh                    ← inicializador Linux
+├── start.ps1                   ← inicializador Windows
+├── configure_weaponpaints.py   ← injeta credenciais do banco no WeaponPaints.json
 ├── cfg/
-│   ├── server.cfg          ← configuração principal
+│   ├── server.cfg              ← configurações gerais do servidor
+│   ├── admins.json             ← lista de admins do CounterStrikeSharp
 │   └── matchzy/
-│       └── matchzy.cfg     ← configuração das partidas
-├── plugins/                ← seus plugins (MatchZy, WeaponPaints...)
+│       └── matchzy.cfg         ← configurações do MatchZy
+├── plugins/
+│   ├── MatchZy-0.8.15/         ← ativo por padrão
+│   ├── WeaponPaints/           ← ativo por padrão
+│   ├── RetakesPlugin-3.1.0/    ← instalado em disabled/, ativação manual
+│   └── Deathmatch/             ← instalado em disabled/, ativação manual
+├── game/
+│   ├── linux/csgo/addons/      ← Metamod + CSS para Linux
+│   └── csgo/addons/            ← configs compartilhadas (vdf, gamedata, lang)
 └── mysql/
-    └── init.sql            ← cria as tabelas no banco
+    └── init.sql                ← cria banco, tabelas e usuário
 ```
 
 ---
 
-## 9. Atualizar o CS2
+## 10. Atualizar o CS2
 
-Basta rodar o instalador novamente — ele só baixa o que mudou:
+Basta rodar o instalador novamente — o SteamCMD baixa apenas o que mudou:
 
 ```bash
 # Linux
@@ -321,17 +304,22 @@ bash install.sh
 
 ## Problemas comuns
 
-**Servidor não aparece na lista pública**
-→ Verifique se `STEAM_TOKEN` está preenchido no `.env`
+**Servidor não aparece na lista pública**  
+→ Confirme que `STEAM_TOKEN` está preenchido no `.env`
 
-**Plugins não carregam**
-→ Verifique se Metamod e CounterStrikeSharp estão instalados em `addons/`
+**Plugins não carregam**  
+→ Linux: verifique se os arquivos em `game/linux/csgo/addons/` foram copiados corretamente  
+→ Windows: o `install.ps1` baixa os frameworks automaticamente — rode novamente com acesso à internet
 
-**Erro de conexão MySQL (WeaponPaints)**
-→ Confirme que o MySQL está rodando e os dados do `.env` estão corretos
+**Skins não aparecem / erro MySQL**  
+→ Confirme que o MySQL está rodando e que as variáveis `DB_*` no `.env` estão corretas  
+→ Confirme que o `mysql/init.sql` foi importado
 
-**Windows: "não é possível executar scripts"**
+**WeaponPaints não carrega (erro no log)**  
+→ Verifique se `FollowCS2ServerGuidelines` está como `false` em `configs/core.json` — o instalador faz isso automaticamente
+
+**Windows: erro "não é possível executar scripts"**  
 → Execute no PowerShell: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`
 
-**Download lento (~30 GB)**
-→ É normal na primeira vez. Atualizações futuras são incrementais.
+**Download lento (~30 GB)**  
+→ Normal na primeira instalação. Atualizações futuras são incrementais.
