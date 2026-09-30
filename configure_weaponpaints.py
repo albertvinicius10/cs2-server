@@ -26,6 +26,8 @@ def main() -> None:
         "DatabaseUser": os.environ.get("DB_USER", ""),
         "DatabasePassword": os.environ.get("DB_PASSWORD", ""),
         "DatabaseName": os.environ.get("DB_NAME", ""),
+        "GloveEnabled": True,
+        "KnifeEnabled": True,
     }
     missing = [key for key, value in required.items() if not value]
     if missing:
