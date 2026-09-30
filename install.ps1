@@ -157,6 +157,10 @@ if (-not (Test-Path $menuManagerDll)) {
             New-Item -ItemType Directory -Force -Path "$AddonsRoot\plugins" | Out-Null
             if (Test-Path "$tmp\addons\counterstrikesharp\plugins") {
                 Copy-Item "$tmp\addons\counterstrikesharp\plugins\*" "$AddonsRoot\plugins" -Recurse -Force
+                if (Test-Path "$tmp\addons\counterstrikesharp\shared") {
+                    New-Item -ItemType Directory -Force -Path "$AddonsRoot\shared" | Out-Null
+                    Copy-Item "$tmp\addons\counterstrikesharp\shared\*" "$AddonsRoot\shared" -Recurse -Force
+                }
             } else {
                 Copy-Item "$tmp\*" "$AddonsRoot\plugins" -Recurse -Force
             }

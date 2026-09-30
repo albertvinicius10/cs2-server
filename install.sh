@@ -228,6 +228,10 @@ if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v 
       rm -f "${TMP_ZIP}"
       if [ -d "${TMP_DIR}/addons/counterstrikesharp/plugins" ]; then
         cp -r "${TMP_DIR}/addons/counterstrikesharp/plugins/." "${ADDONS_DEST}/"
+        if [ -d "${TMP_DIR}/addons/counterstrikesharp/shared" ]; then
+          mkdir -p "${ADDONS_ROOT}/shared"
+          cp -r "${TMP_DIR}/addons/counterstrikesharp/shared/." "${ADDONS_ROOT}/shared/"
+        fi
       else
         cp -r "${TMP_DIR}/." "${ADDONS_DEST}/"
       fi
