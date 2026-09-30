@@ -235,8 +235,10 @@ if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v 
     curl -sSL "${URL}" -o "${TMP_ZIP}"
     unzip -q "${TMP_ZIP}" -d "${TMP_DIR}"
     rm -f "${TMP_ZIP}"
-    if [ -d "${TMP_DIR}/addons/counterstrikesharp/plugins" ]; then
-      cp -r "${TMP_DIR}/addons/counterstrikesharp/plugins/." "${ADDONS_DEST}/"
+    if [ -d "${TMP_DIR}/addons/counterstrikesharp" ]; then
+      if [ -d "${TMP_DIR}/addons/counterstrikesharp/plugins" ]; then
+        cp -r "${TMP_DIR}/addons/counterstrikesharp/plugins/." "${ADDONS_DEST}/"
+      fi
       if [ -d "${TMP_DIR}/addons/counterstrikesharp/shared" ]; then
         mkdir -p "${ADDONS_ROOT}/shared"
         cp -r "${TMP_DIR}/addons/counterstrikesharp/shared/." "${ADDONS_ROOT}/shared/"
@@ -249,7 +251,7 @@ if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v 
   }
 
   # AnyBaseLib → PlayerSettings → MenuManager (cadeia de dependências)
-  install_nickfox_plugin "AnyBaseLib"     "AnyBaseLibCS2"     "${ADDONS_DEST}/AnyBaseLib/AnyBaseLib.dll"
+  install_nickfox_plugin "AnyBaseLib"     "AnyBaseLibCS2"     "${ADDONS_ROOT}/shared/AnyBaseLib/AnyBaseLib.dll"
   install_nickfox_plugin "PlayerSettings" "PlayerSettingsCS2" "${ADDONS_DEST}/PlayerSettings/PlayerSettings.dll"
 
   # MenuManager → requerido pelo WeaponPaints para luvas e menus

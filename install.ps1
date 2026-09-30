@@ -157,14 +157,17 @@ function Install-NickFoxPlugin($name, $repo, $checkDll) {
             if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
             Expand-Archive -Path $zip -DestinationPath $tmp -Force
             Remove-Item $zip
-            New-Item -ItemType Directory -Force -Path "$AddonsRoot\plugins" | Out-Null
-            if (Test-Path "$tmp\addons\counterstrikesharp\plugins") {
-                Copy-Item "$tmp\addons\counterstrikesharp\plugins\*" "$AddonsRoot\plugins" -Recurse -Force
+            if (Test-Path "$tmp\addons\counterstrikesharp") {
+                if (Test-Path "$tmp\addons\counterstrikesharp\plugins") {
+                    New-Item -ItemType Directory -Force -Path "$AddonsRoot\plugins" | Out-Null
+                    Copy-Item "$tmp\addons\counterstrikesharp\plugins\*" "$AddonsRoot\plugins" -Recurse -Force
+                }
                 if (Test-Path "$tmp\addons\counterstrikesharp\shared") {
                     New-Item -ItemType Directory -Force -Path "$AddonsRoot\shared" | Out-Null
                     Copy-Item "$tmp\addons\counterstrikesharp\shared\*" "$AddonsRoot\shared" -Recurse -Force
                 }
             } else {
+                New-Item -ItemType Directory -Force -Path "$AddonsRoot\plugins" | Out-Null
                 Copy-Item "$tmp\*" "$AddonsRoot\plugins" -Recurse -Force
             }
             Remove-Item $tmp -Recurse -Force
@@ -179,7 +182,7 @@ function Install-NickFoxPlugin($name, $repo, $checkDll) {
 }
 
 # ─── Baixa AnyBaseLib → PlayerSettings → MenuManager ────
-Install-NickFoxPlugin "AnyBaseLib"    "AnyBaseLibCS2"     "$AddonsRoot\plugins\AnyBaseLib\AnyBaseLib.dll"
+Install-NickFoxPlugin "AnyBaseLib"    "AnyBaseLibCS2"     "$AddonsRoot\shared\AnyBaseLib\AnyBaseLib.dll"
 Install-NickFoxPlugin "PlayerSettings" "PlayerSettingsCS2" "$AddonsRoot\plugins\PlayerSettings\PlayerSettings.dll"
 
 # ─── Baixa MenuManager ──────────────────────────────
