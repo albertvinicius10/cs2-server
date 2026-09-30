@@ -140,16 +140,19 @@ if (-not (Test-Path $CSSDll)) {
     Write-Success "CounterStrikeSharp já instalado"
 }
 
-# ─── Baixa MenuManager ──────────────────────────────
-$menuManagerDll = "$AddonsRoot\plugins\MenuManager\MenuManager.dll"
-if (-not (Test-Path $menuManagerDll)) {
-    Write-Info "Baixando MenuManager (requerido pelo WeaponPaints para luvas)..."
+# ─── Helper: baixa plugin do NickFox007 ─────────────
+function Install-NickFoxPlugin($name, $repo, $checkDll) {
+    if (Test-Path $checkDll) {
+        Write-Success "$name já instalado"
+        return
+    }
+    Write-Info "Baixando $name..."
     try {
-        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/NickFox007/MenuManagerCS2/releases/latest" -UseBasicParsing
+        $release = Invoke-RestMethod -Uri "https://api.github.com/repos/NickFox007/$repo/releases/latest" -UseBasicParsing
         $asset = $release.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1
         if ($asset) {
-            $zip = "$env:TEMP\menumanager.zip"
-            $tmp = "$env:TEMP\menumanager-extract"
+            $zip = "$env:TEMP\$name.zip"
+            $tmp = "$env:TEMP\$name-extract"
             Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -UseBasicParsing
             if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
             Expand-Archive -Path $zip -DestinationPath $tmp -Force
@@ -165,17 +168,21 @@ if (-not (Test-Path $menuManagerDll)) {
                 Copy-Item "$tmp\*" "$AddonsRoot\plugins" -Recurse -Force
             }
             Remove-Item $tmp -Recurse -Force
-            Write-Success "MenuManager instalado"
+            Write-Success "$name instalado"
         } else {
-            Write-Warn "Nenhum asset .zip encontrado na release do MenuManager"
+            Write-Warn "Nenhum asset .zip encontrado na release de $name"
         }
     } catch {
-        Write-Warn "Não foi possível baixar MenuManager: $_"
-        Write-Warn "Baixe manualmente em: https://github.com/NickFox007/MenuManagerCS2/releases"
+        Write-Warn "Não foi possível baixar $name`: $_"
+        Write-Warn "Baixe manualmente em: https://github.com/NickFox007/$repo/releases"
     }
-} else {
-    Write-Success "MenuManager já instalado"
 }
+
+# ─── Baixa PlayerSettings (dependência do MenuManager) ──
+Install-NickFoxPlugin "PlayerSettings" "PlayerSettingsCS2" "$AddonsRoot\plugins\PlayerSettings\PlayerSettings.dll"
+
+# ─── Baixa MenuManager ──────────────────────────────
+Install-NickFoxPlugin "MenuManager" "MenuManagerCS2" "$AddonsRoot\plugins\MenuManagerCore\MenuManagerCore.dll"
 
 # Copia configs do repo (vdf, gamedata, lang, api — sem sobrescrever bin/)
 $AddonSource = "$ScriptDir\game\csgo\addons"

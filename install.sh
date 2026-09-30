@@ -214,35 +214,45 @@ if [ -d "${PLUGINS_SRC}" ] && [ "$(ls -A "${PLUGINS_SRC}" 2>/dev/null | grep -v 
     cp -r "${WEAPONPAINTS_SRC}/gamedata/." "${ADDONS_ROOT}/gamedata/"
   fi
 
-  # MenuManager → plugins/ (requerido pelo WeaponPaints para luvas e menus)
-  MENU_MANAGER_DLL="${ADDONS_DEST}/MenuManager/MenuManager.dll"
-  if [ ! -f "${MENU_MANAGER_DLL}" ]; then
-    info "Baixando MenuManager (requerido pelo WeaponPaints para luvas)..."
-    MM_URL=$(curl -s "https://api.github.com/repos/NickFox007/MenuManagerCS2/releases/latest" \
-      | grep -o '"browser_download_url": *"[^"]*\.zip"' | grep -o 'https://[^"]*' | head -1)
-    if [ -n "${MM_URL}" ]; then
-      TMP_ZIP=$(mktemp /tmp/menumanager-XXXXX.zip)
-      TMP_DIR=$(mktemp -d /tmp/menumanager-XXXXX)
-      curl -sSL "${MM_URL}" -o "${TMP_ZIP}"
-      unzip -q "${TMP_ZIP}" -d "${TMP_DIR}"
-      rm -f "${TMP_ZIP}"
-      if [ -d "${TMP_DIR}/addons/counterstrikesharp/plugins" ]; then
-        cp -r "${TMP_DIR}/addons/counterstrikesharp/plugins/." "${ADDONS_DEST}/"
-        if [ -d "${TMP_DIR}/addons/counterstrikesharp/shared" ]; then
-          mkdir -p "${ADDONS_ROOT}/shared"
-          cp -r "${TMP_DIR}/addons/counterstrikesharp/shared/." "${ADDONS_ROOT}/shared/"
-        fi
-      else
-        cp -r "${TMP_DIR}/." "${ADDONS_DEST}/"
-      fi
-      rm -rf "${TMP_DIR}"
-      success "MenuManager instalado"
-    else
-      warn "Não foi possível baixar MenuManager. Baixe manualmente em: https://github.com/NickFox007/MenuManagerCS2/releases"
+  # Helper: baixa plugin do NickFox007
+  install_nickfox_plugin() {
+    local NAME="$1" REPO="$2" CHECK_DLL="$3"
+    if [ -f "${CHECK_DLL}" ]; then
+      success "${NAME} já instalado"
+      return
     fi
-  else
-    success "MenuManager já instalado"
-  fi
+    info "Baixando ${NAME}..."
+    local URL
+    URL=$(curl -s "https://api.github.com/repos/NickFox007/${REPO}/releases/latest" \
+      | grep -o '"browser_download_url": *"[^"]*\.zip"' | grep -o 'https://[^"]*' | head -1)
+    if [ -z "${URL}" ]; then
+      warn "Não foi possível baixar ${NAME}. Baixe manualmente em: https://github.com/NickFox007/${REPO}/releases"
+      return
+    fi
+    local TMP_ZIP TMP_DIR
+    TMP_ZIP=$(mktemp /tmp/nickfox-XXXXX.zip)
+    TMP_DIR=$(mktemp -d /tmp/nickfox-XXXXX)
+    curl -sSL "${URL}" -o "${TMP_ZIP}"
+    unzip -q "${TMP_ZIP}" -d "${TMP_DIR}"
+    rm -f "${TMP_ZIP}"
+    if [ -d "${TMP_DIR}/addons/counterstrikesharp/plugins" ]; then
+      cp -r "${TMP_DIR}/addons/counterstrikesharp/plugins/." "${ADDONS_DEST}/"
+      if [ -d "${TMP_DIR}/addons/counterstrikesharp/shared" ]; then
+        mkdir -p "${ADDONS_ROOT}/shared"
+        cp -r "${TMP_DIR}/addons/counterstrikesharp/shared/." "${ADDONS_ROOT}/shared/"
+      fi
+    else
+      cp -r "${TMP_DIR}/." "${ADDONS_DEST}/"
+    fi
+    rm -rf "${TMP_DIR}"
+    success "${NAME} instalado"
+  }
+
+  # PlayerSettings → dependência do MenuManager
+  install_nickfox_plugin "PlayerSettings" "PlayerSettingsCS2" "${ADDONS_DEST}/PlayerSettings/PlayerSettings.dll"
+
+  # MenuManager → requerido pelo WeaponPaints para luvas e menus
+  install_nickfox_plugin "MenuManager" "MenuManagerCS2" "${ADDONS_DEST}/MenuManagerCore/MenuManagerCore.dll"
 
   success "Plugins copiados"
 else
